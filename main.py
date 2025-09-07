@@ -10,6 +10,8 @@ import re
 
 GAMES_REFRESH_RATE = 900.0
 
+# chatGPT update 5
+
 # -------------------- USER CONFIG --------------------
 USER_SCALE = 2.0             # 1.0 = default 64x32 resolution
 GRAPHICS_X_OFFSET = 0        # X offset for graphics/logos/animations
@@ -146,22 +148,19 @@ class MainRenderer:
         self.image = Image.new('RGB', (self.width, self.height))
         self.draw = ImageDraw.Draw(self.image)
 
-      # -------------------- COUNTDOWN --------------------
-
+    # -------------------- COUNTDOWN --------------------
     def _draw_countdown(self, game):
         now = self.data.get_current_date()
         gametime = datetime.strptime(game['date'], "%Y-%m-%dT%H:%MZ")
         delta = gametime - now
         gametime_text = ':'.join(str(delta).split(':')[:2]) if delta > timedelta(hours=1) else ':'.join(str(delta).split(':')[1:]).split('.')[0]
 
-        in_font = self._fit_text_font("IN", "fonts/04B_24__.TTF", 8, self.width - 4)
+        in_pos = self._scale_graphics_pos(29, 0)
         gametime_font = self._fit_text_font(gametime_text, "fonts/04B_24__.TTF", 8, self.width - 4)
-
-        in_pos = self._auto_center_text_pos("IN", in_font, 0.0)
-        gametime_pos = self._auto_center_text_pos(gametime_text, gametime_font, 0.2)
+        gametime_pos = self._scale_text_pos(gametime_font.getsize(gametime_text)[0], 6)
         vs_pos = self._scale_graphics_pos(25, 15)
 
-        self.draw.text(in_pos, "IN", font=in_font, fill=(255, 255, 255))
+        self.draw.text(in_pos, "IN", font=gametime_font, fill=(255, 255, 255))
         self.draw.multiline_text(gametime_pos, gametime_text, font=gametime_font, fill=(255, 255, 255), align="center")
         self.draw.text(vs_pos, "VS", font=self.font, fill=(255, 255, 255))
 
@@ -191,35 +190,35 @@ class MainRenderer:
         quarter = str(game['quarter'])
         time_period = game['time']
 
-        # Vertical ratios
-        info_y_down, info_y_spot, info_y_pos, info_y_quarter, info_y_time = 0.6, 0.75, 0.4, 0.0, 0.2
+        info_y_down, info_y_spot, info_y_pos, info_y_quarter, info_y_time = 19, 25, 13, 0, 6
 
         if down:
             down_font = self._fit_text_font(down, "fonts/04B_24__.TTF", 8, self.width - 4)
-            down_pos = self._auto_center_text_pos(down, down_font, info_y_down)
+            down_pos = self._scale_text_pos(down_font.getsize(down)[0], info_y_down)
             self.draw.multiline_text(down_pos, down, fill=(255, 255, 255), font=down_font, align="center")
-
         if spot:
             spot_font = self._fit_text_font(spot, "fonts/04B_24__.TTF", 8, self.width - 4)
-            spot_pos = self._auto_center_text_pos(spot, spot_font, info_y_spot)
+            spot_pos = self._scale_text_pos(spot_font.getsize(spot)[0], info_y_spot)
             self.draw.multiline_text(spot_pos, spot, fill=(255, 255, 255), font=spot_font, align="center")
 
         pos_font = self._fit_text_font(pos_team, "fonts/04B_24__.TTF", 8, self.width - 4)
         pos_colour = (255, 25, 25) if game['redzone'] else (255, 255, 255)
-        pos_pos = self._auto_center_text_pos(pos_team, pos_font, info_y_pos)
+        pos_pos = self._scale_text_pos(pos_font.getsize(pos_team)[0], info_y_pos)
         self.draw.multiline_text(pos_pos, pos_team, fill=pos_colour, font=pos_font, align="center")
 
         quarter_font = self._fit_text_font(quarter, "fonts/04B_24__.TTF", 8, self.width - 4)
         time_font = self._fit_text_font(time_period, "fonts/04B_24__.TTF", 8, self.width - 4)
-        quarter_pos = self._auto_center_text_pos(quarter, quarter_font, info_y_quarter)
-        time_pos = self._auto_center_text_pos(time_period, time_font, info_y_time)
+        quarter_pos = self._scale_text_pos(quarter_font.getsize(quarter)[0], info_y_quarter)
+        time_pos = self._scale_text_pos(time_font.getsize(time_period)[0], info_y_time)
         self.draw.multiline_text(quarter_pos, quarter, fill=(255, 255, 255), font=quarter_font, align="center")
         self.draw.multiline_text(time_pos, time_period, fill=(255, 255, 255), font=time_font, align="center")
 
         homescore_text = '{0:02d}'.format(homescore)
         awayscore_text = '{0:02d}'.format(awayscore)
+        home_score_size = self.font.getsize(homescore_text)[0]
+
         away_score_pos = self._scale_graphics_pos(6, 19)
-        home_score_pos = self._scale_graphics_pos(59 - self.font.getsize(homescore_text)[0], 19)
+        home_score_pos = self._scale_graphics_pos(71 - home_score_size, 19)
         self.draw.multiline_text(away_score_pos, awayscore_text, fill=(255, 255, 255), font=self.font, align="center")
         self.draw.multiline_text(home_score_pos, homescore_text, fill=(255, 255, 255), font=self.font, align="center")
 
@@ -240,10 +239,10 @@ class MainRenderer:
     def _draw_post_game(self, game):
         score_text = f'{game["awayscore"]}-{game["homescore"]}'
         score_font = self._fit_text_font(score_text, "fonts/score_large.otf", 16, self.width - 4)
-        score_pos = self._auto_center_text_pos(score_text, score_font, 0.6)
+        score_pos = self._scale_text_pos(score_font.getsize(score_text)[0], 19)
 
         end_font = self._fit_text_font("END", "fonts/04B_24__.TTF", 8, self.width - 4)
-        end_pos = self._auto_center_text_pos("END", end_font, 0.2)
+        end_pos = self._scale_text_pos(end_font.getsize("END")[0], 0)
 
         self.draw.multiline_text(score_pos, score_text, fill=(255, 255, 255), font=score_font, align="center")
         self.draw.multiline_text(end_pos, "END", fill=(255, 255, 255), font=end_font, align="center")
